@@ -19,18 +19,22 @@ def search():
         return jsonify({'error': 'No query provided'}), 400
 
     try:
-        # Use a more reliable Unsplash endpoint for random image based on query
-        url = f"https://source.unsplash.com/random/800x600/?{query},photo"
+        # Use Unsplash random endpoint without specifying exact resolution
+        url = f"https://source.unsplash.com/random/?{query},photo"
         print("📡 Requesting image from:", url)
 
         response = requests.get(url, timeout=5)
         print("📦 Response status code:", response.status_code)
 
+        # Check if the response is valid, otherwise fallback to a default image
         if response.status_code == 200:
             return send_file(BytesIO(response.content), mimetype='image/jpeg')
         else:
             print("🚫 Failed to get image from Unsplash")
-            return jsonify({'error': 'Image not found'}), 500
+            # Fallback image URL if the search fails
+            fallback_url = "https://via.placeholder.com/800x600.png?text=Image+Not+Found"
+            fallback_response = requests.get(fallback_url)
+            return send_file(BytesIO(fallback_response.content), mimetype='image/png')
 
     except Exception as e:
         print("💥 Server error:", e)
