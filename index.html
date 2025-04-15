@@ -1,79 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Search</title>
-    <style>
-        #loading-spinner {
-            display: none;
-            font-size: 20px;
-            margin-top: 10px;
-        }
-        #image-container {
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Search</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    #loading-spinner {
+      display: none;
+      font-size: 20px;
+      margin-top: 10px;
+    }
+    #image-container {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Search for Images</h1>
-    
-    <!-- Input for search query -->
-    <input type="text" id="query" placeholder="Enter search term...">
-    <button onclick="searchImages()">Search</button>
+  <h2>Search for an Image</h2>
+  <input type="text" id="query" placeholder="Type something..." />
+  <button onclick="searchImages()">Search</button>
 
-    <!-- Loading Spinner -->
-    <div id="loading-spinner">Loading...</div>
+  <div id="loading-spinner">Loading...</div>
+  <div id="image-container"></div>
 
-    <!-- Section to display image -->
-    <div id="image-container"></div>
+  <script>
+    function searchImages() {
+      const query = document.getElementById("query").value.trim();
+      if (!query) return alert("Enter a search term!");
 
-    <script>
-        function searchImages() {
-            const query = document.getElementById("query").value;
-            if (!query) {
-                alert("Please enter a search term.");
-                return;
-            }
+      document.getElementById("loading-spinner").style.display = "block";
+      document.getElementById("image-container").innerHTML = "";
 
-            // Show the loading spinner while waiting for the response
-            document.getElementById("loading-spinner").style.display = "block";
-            document.getElementById("image-container").innerHTML = "";  // Clear any previous image
+      fetch(`/search?q=${encodeURIComponent(query)}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+          return res.blob();
+        })
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          document.getElementById("image-container").innerHTML = `<img src="${url}" style="max-width: 100%;">`;
+        })
+        .catch(err => {
+          console.error("Fetch error:", err);
+          alert("Error: " + err.message);
+        })
+        .finally(() => {
+          document.getElementById("loading-spinner").style.display = "none";
+        });
 
-            // Call the Flask /search API
-            fetch(`/search?q=${query}`)
-                .then(response => {
-                    if (response.ok) {
-                        // Return the image blob (binary data)
-                        return response.blob();
-                    } else {
-                        throw new Error('Failed to fetch image');
-                    }
-                })
-                .then(imageBlob => {
-                    // Hide the loading spinner once the image is ready
-                    document.getElementById("loading-spinner").style.display = "none";
-
-                    // Create a local URL for the image blob
-                    const imageUrl = URL.createObjectURL(imageBlob);
-                    // Display the image in the image-container div
-                    document.getElementById("image-container").innerHTML = `<img src="${imageUrl}" alt="Image" style="max-width: 100%;">`;
-                })
-                .catch(error => {
-                    // Hide the loading spinner if there's an error
-                    document.getElementById("loading-spinner").style.display = "none";
-                    console.error('Error:', error);
-                    alert("An error occurred while fetching the image.");
-                });
-
-            // Set a timeout to hide the loading spinner after 3 seconds in case of delay
-            setTimeout(function() {
-                if (document.getElementById("loading-spinner").style.display !== "none") {
-                    document.getElementById("loading-spinner").style.display = "none";
-                    alert("It took too long to get the image. Please try again.");
-                }
-            }, 3000);  // 3 seconds timeout
+      // Optional fallback timeout
+      setTimeout(() => {
+        const spinner = document.getElementById("loading-spinner");
+        if (spinner.style.display !== "none") {
+          spinner.style.display = "none";
+          alert("Took too long. Try again?");
         }
-    </script>
+      }, 3000);
+    }
+  </script>
 </body>
 </html>
