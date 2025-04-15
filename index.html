@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Search</title>
+    <style>
+        #loading-spinner {
+            display: none;
+            font-size: 20px;
+            margin-top: 10px;
+        }
+        #image-container {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <h1>Search for Images</h1>
@@ -11,7 +21,10 @@
     <!-- Input for search query -->
     <input type="text" id="query" placeholder="Enter search term...">
     <button onclick="searchImages()">Search</button>
-    
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner">Loading...</div>
+
     <!-- Section to display image -->
     <div id="image-container"></div>
 
@@ -23,10 +36,16 @@
                 return;
             }
 
+            // Show the loading spinner
+            document.getElementById("loading-spinner").style.display = "block";
+            
             // Call the Flask /search API
             fetch(`/search?q=${query}`)
                 .then(response => response.json())
                 .then(data => {
+                    // Hide the loading spinner
+                    document.getElementById("loading-spinner").style.display = "none";
+                    
                     if (data.image) {
                         // Display the image in the image-container div
                         document.getElementById("image-container").innerHTML = `<img src="${data.image}" alt="Image" style="max-width: 100%;">`;
@@ -35,9 +54,19 @@
                     }
                 })
                 .catch(error => {
+                    // Hide the loading spinner
+                    document.getElementById("loading-spinner").style.display = "none";
                     console.error('Error:', error);
                     alert("An error occurred while fetching the image.");
                 });
+
+            // Set a timeout to hide the loading spinner after 3 seconds
+            setTimeout(function() {
+                if (document.getElementById("loading-spinner").style.display !== "none") {
+                    document.getElementById("loading-spinner").style.display = "none";
+                    alert("It took too long to get the image. Please try again.");
+                }
+            }, 3000);  // 3 seconds timeout
         }
     </script>
 </body>
