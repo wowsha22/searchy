@@ -2,6 +2,7 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 import requests
 from io import BytesIO
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -31,10 +32,9 @@ def search():
             return send_file(BytesIO(response.content), mimetype='image/jpeg')
         else:
             print("🚫 Failed to get image from Unsplash")
-            # Fallback image URL if the search fails
-            fallback_url = "https://via.placeholder.com/800x600.png?text=Image+Not+Found"
-            fallback_response = requests.get(fallback_url)
-            return send_file(BytesIO(fallback_response.content), mimetype='image/png')
+            # Fallback to a locally stored default image if the search fails
+            default_image_path = os.path.join(app.root_path, 'static', 'default_image.jpg')
+            return send_file(default_image_path, mimetype='image/jpeg')
 
     except Exception as e:
         print("💥 Server error:", e)
