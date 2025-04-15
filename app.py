@@ -3,14 +3,16 @@ import requests
 
 app = Flask(__name__, static_url_path='', static_folder='.')
 
+# Serve the index.html for the web app
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
 
+# API route for image search
 @app.route('/search')
 def search():
     query = request.args.get('q', '')
-    url = f'https://duckduckgo.com/i.js'
+    url = 'https://duckduckgo.com/i.js'
     headers = {
         'User-Agent': 'Mozilla/5.0'
     }
@@ -26,5 +28,6 @@ def search():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Make sure the Flask app runs on the correct host and port
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)
