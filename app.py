@@ -19,8 +19,8 @@ def search():
         return jsonify({'error': 'No query provided'}), 400
 
     try:
-        # Use Unsplash random image for now (search-based placeholder)
-        url = f"https://source.unsplash.com/800x600/?{query}"
+        # Use a more reliable Unsplash endpoint for random image based on query
+        url = f"https://source.unsplash.com/random/800x600/?{query},photo"
         print("📡 Requesting image from:", url)
 
         response = requests.get(url, timeout=5)
