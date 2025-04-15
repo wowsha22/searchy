@@ -1,68 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Image Search</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      text-align: center;
-    }
-    #loading-spinner {
-      display: none;
-      font-size: 20px;
-      margin-top: 10px;
-    }
-    #image-container {
-      margin-top: 20px;
-    }
-  </style>
-</head>
-<body>
-  <h2>Search for an Image</h2>
-  <input type="text" id="query" placeholder="Type something..." />
-  <button onclick="searchImages()">Search</button>
+from flask import Flask, request, send_file, send_from_directory, jsonify
+from flask_cors import CORS
+import requests
+from io import BytesIO
 
-  <div id="loading-spinner">Loading...</div>
-  <div id="image-container"></div>
+app = Flask(__name__, static_folder='.')
+CORS(app)  # Allow requests from any origin
 
-  <script>
-    function searchImages() {
-      const query = document.getElementById("query").value.trim();
-      if (!query) return alert("Enter a search term!");
+# Serve the HTML file
+@app.route('/')
+def index():
+    return send_from_directory('.', 'index.html')
 
-      document.getElementById("loading-spinner").style.display = "block";
-      document.getElementById("image-container").innerHTML = "";
+# Image search route
+@app.route('/search')
+def search():
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify({'error': 'Query is required'}), 400
 
-      fetch(`/search?q=${encodeURIComponent(query)}`)
-        .then(res => {
-          if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-          return res.blob();
-        })
-        .then(blob => {
-          const url = URL.createObjectURL(blob);
-          document.getElementById("image-container").innerHTML = `<img src="${url}" style="max-width: 100%;">`;
-        })
-        .catch(err => {
-          console.error("Fetch error:", err);
-          alert("Error: " + err.message);
-        })
-        .finally(() => {
-          document.getElementById("loading-spinner").style.display = "none";
-        });
+    url = f"https://source.unsplash.com/800x600/?{query}"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            img = BytesIO(response.content)
+            return send_file(img, mimetype='image/jpeg')
+        else:
+            return jsonify({'error': 'Image not found'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-      // Optional fallback timeout
-      setTimeout(() => {
-        const spinner = document.getElementById("loading-spinner");
-        if (spinner.style.display !== "none") {
-          spinner.style.display = "none";
-          alert("Took too long. Try again?");
-        }
-      }, 3000);
-    }
-  </script>
-</body>
-</html>
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
