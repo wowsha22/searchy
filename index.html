@@ -1,46 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Image Search</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f2f2f2; }
-    img { max-width: 100px; margin: 5px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-    input, button { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
-    button { background-color: #0088cc; color: white; border: none; margin-left: 5px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Search</title>
 </head>
 <body>
-  <h2>🔍 Search for Images</h2>
-  <input id="query" type="text" placeholder="Type something..." />
-  <button onclick="search()">Search</button>
-  <div id="results"></div>
+    <h1>Search for Images</h1>
+    
+    <!-- Input for search query -->
+    <input type="text" id="query" placeholder="Enter search term...">
+    <button onclick="searchImages()">Search</button>
+    
+    <!-- Section to display image -->
+    <div id="image-container"></div>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand(); // Fullscreen the Mini App
+    <script>
+        function searchImages() {
+            const query = document.getElementById("query").value;
+            if (!query) {
+                alert("Please enter a search term.");
+                return;
+            }
 
-    async function search() {
-      const query = document.getElementById('query').value;
-      if (!query.trim()) return;
-
-      const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
-      const data = await response.json();
-
-      const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML = '';
-      
-      if (data.images) {
-        data.images.forEach(url => {
-          const img = document.createElement('img');
-          img.src = url;
-          resultsDiv.appendChild(img);
-        });
-      } else {
-        resultsDiv.innerHTML = '<p>No results found.</p>';
-      }
-    }
-  </script>
+            // Call the Flask /search API
+            fetch(`/search?q=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.image) {
+                        // Display the image in the image-container div
+                        document.getElementById("image-container").innerHTML = `<img src="${data.image}" alt="Image" style="max-width: 100%;">`;
+                    } else {
+                        document.getElementById("image-container").innerHTML = "No images found.";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("An error occurred while fetching the image.");
+                });
+        }
+    </script>
 </body>
 </html>
