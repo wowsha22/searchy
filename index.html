@@ -36,31 +36,37 @@
                 return;
             }
 
-            // Show the loading spinner
+            // Show the loading spinner while waiting for the response
             document.getElementById("loading-spinner").style.display = "block";
-            
+            document.getElementById("image-container").innerHTML = "";  // Clear any previous image
+
             // Call the Flask /search API
             fetch(`/search?q=${query}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Hide the loading spinner
-                    document.getElementById("loading-spinner").style.display = "none";
-                    
-                    if (data.image) {
-                        // Display the image in the image-container div
-                        document.getElementById("image-container").innerHTML = `<img src="${data.image}" alt="Image" style="max-width: 100%;">`;
+                .then(response => {
+                    if (response.ok) {
+                        // Return the image blob (binary data)
+                        return response.blob();
                     } else {
-                        document.getElementById("image-container").innerHTML = "No images found.";
+                        throw new Error('Failed to fetch image');
                     }
                 })
+                .then(imageBlob => {
+                    // Hide the loading spinner once the image is ready
+                    document.getElementById("loading-spinner").style.display = "none";
+
+                    // Create a local URL for the image blob
+                    const imageUrl = URL.createObjectURL(imageBlob);
+                    // Display the image in the image-container div
+                    document.getElementById("image-container").innerHTML = `<img src="${imageUrl}" alt="Image" style="max-width: 100%;">`;
+                })
                 .catch(error => {
-                    // Hide the loading spinner
+                    // Hide the loading spinner if there's an error
                     document.getElementById("loading-spinner").style.display = "none";
                     console.error('Error:', error);
                     alert("An error occurred while fetching the image.");
                 });
 
-            // Set a timeout to hide the loading spinner after 3 seconds
+            // Set a timeout to hide the loading spinner after 3 seconds in case of delay
             setTimeout(function() {
                 if (document.getElementById("loading-spinner").style.display !== "none") {
                     document.getElementById("loading-spinner").style.display = "none";
