@@ -12,19 +12,22 @@ def index():
 @app.route('/search')
 def search():
     query = request.args.get('q', '')
-    url = 'https://duckduckgo.com/i.js'
-    headers = {
-        'User-Agent': 'Mozilla/5.0'
-    }
-    params = {
-        'q': query
-    }
+    if not query:
+        return jsonify({'error': 'Query parameter is required'}), 400
 
+    # Unsplash search URL for random images based on the query
+    url = f"https://source.unsplash.com/800x600/?{query}"
+    
+    # Make the request to Unsplash
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=5)
-        data = response.json()
-        images = [img['image'] for img in data.get('results', [])]
-        return jsonify({'images': images})
+        response = requests.get(url)
+        
+        # If the response is successful, return the image URL
+        if response.status_code == 200:
+            image_url = response.url
+            return jsonify({'image': image_url})
+        else:
+            return jsonify({'error': 'Failed to retrieve image from Unsplash'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
